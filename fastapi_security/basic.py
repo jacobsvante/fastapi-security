@@ -1,17 +1,19 @@
 import secrets
-from typing import List, Optional
+from typing import Dict, List, Union
 
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBasicCredentials
 
-__all__ = ("basic_auth",)
+__all__ = ()
+
+ListOfCredentials = List[Union[HTTPBasicCredentials, Dict]]
 
 
 class BasicAuthValidator:
     def __init__(self):
         self._credentials = []
 
-    def init(self, credentials: Optional[List[HTTPBasicCredentials]]):
-        self._credentials = credentials or []
+    def init(self, credentials: ListOfCredentials):
+        self._credentials = self._make_credentials(credentials)
 
     def is_configured(self) -> bool:
         return len(self._credentials) > 0
@@ -27,5 +29,8 @@ class BasicAuthValidator:
             for c in self._credentials
         )
 
-
-basic_auth = BasicAuthValidator()
+    def _make_credentials(self, credentials: ListOfCredentials):
+        return [
+            c if isinstance(c, HTTPBasicCredentials) else HTTPBasicCredentials(**c)
+            for c in credentials
+        ]

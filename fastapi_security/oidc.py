@@ -6,8 +6,6 @@ import aiohttp
 
 from .entities import UserInfo
 
-__all__ = ("oidc_discovery",)
-
 logger = logging.getLogger(__name__)
 
 
@@ -104,6 +102,3 @@ class OpenIdConnectDiscovery:
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(self._discovery_url) as response:
                 return await response.json()
-
-
-oidc_discovery = OpenIdConnectDiscovery()

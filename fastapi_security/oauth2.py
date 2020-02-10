@@ -4,21 +4,14 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, Optional
 
 import aiohttp
+import jwt
+from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
+from jwt.algorithms import RSAAlgorithm
 from pydantic import ValidationError
 
 from .entities import JwtAccessToken
 
-try:
-    import jwt
-    from jwt.algorithms import RSAAlgorithm
-    from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
-except IndexError:
-    jwt = None
-    RSAAlgorithm = None
-    _RSAPublicKey = None
-
-
-__all__ = ("oauth2_jwt",)
+__all__ = ()
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +64,6 @@ class Oauth2JwtAccessTokenValidator:
         self._audiences = list(audiences)
 
     def is_configured(self) -> bool:
-        if jwt is None:
-            raise RuntimeError("Package `PyJWT` not installed")
-        if RSAAlgorithm is None:
-            raise RuntimeError(
-                "`jwt.algorithms.RSAAlgorithm` not found "
-                "(Provided by `cryptography` package, can be installed via "
-                "`pip install PyJWT[cryptography]`)"
-            )
         return bool(self._jwks_url)
 
     async def parse(self, access_token: str) -> Optional[JwtAccessToken]:
@@ -96,7 +81,7 @@ class Oauth2JwtAccessTokenValidator:
             return None
 
         try:
-            unverified_header = token_kid = jwt.get_unverified_header(access_token)
+            unverified_header = jwt.get_unverified_header(access_token)
         except jwt.InvalidTokenError as ex:
             logger.debug(f"Decoding unverified JWT token failed with error: {ex!r}")
             return None
@@ -140,6 +125,7 @@ class Oauth2JwtAccessTokenValidator:
             self._jwks_kid_mapping = {
                 k["kid"]: RSAAlgorithm.from_jwk(json.dumps(k))
                 for k in jwks_data["keys"]
+                if k["kty"] == "RSA" and k["alg"] == "RS256"
             }
             self._jwks_cached_at = datetime.utcnow()
             assert len(self._jwks_kid_mapping) > 0
@@ -164,6 +150,3 @@ class Oauth2JwtAccessTokenValidator:
         return jwt.decode(
             access_token, key=public_key, audience=self._audiences, algorithms=["RS256"]
         )
-
-
-oauth2_jwt = Oauth2JwtAccessTokenValidator()

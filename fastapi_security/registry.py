@@ -1,6 +1,6 @@
 from typing import List
 
-__all__ = ("add_permission", "get_all_permissions")
+__all__ = ()
 
 
 _permissions_registry: List[str] = []

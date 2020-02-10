@@ -2,11 +2,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from . import registry
 
-__all__ = ("JwtAccessToken", "User", "UserAuth", "UserInfo", "AuthMethod")
+__all__ = ("User",)
 
 
 class JwtAccessToken(BaseModel):
@@ -16,7 +16,7 @@ class JwtAccessToken(BaseModel):
     iat: datetime = Field(..., description="Issued At")
     exp: datetime = Field(..., description="Expiration Time")
     azp: str = Field(
-        ...,
+        None,
         description="Authorized party - the party to which the ID Token was issued",
     )
     gty: str = Field(
@@ -29,6 +29,9 @@ class JwtAccessToken(BaseModel):
         description="Permissions (auth0 specific, intended for first-party app authorization)",
     )
     raw: str = Field(..., description="The raw access token")
+    _extra: Dict[str, Any] = Field(
+        {}, description="Any extra fields that were provided in the access token"
+    )
 
     @validator("aud", pre=True, always=True)
     def aud_to_list(cls, v):
@@ -36,7 +39,10 @@ class JwtAccessToken(BaseModel):
 
     @validator("scope", pre=True, always=True)
     def scope_to_list(cls, v):
-        return v.split(" ") if isinstance(v, str) else v
+        if isinstance(v, str):
+            return [s for s in v.split(" ") if s]
+        else:
+            return v
 
     @validator("permissions", pre=True, always=True)
     def permissions_to_list(cls, v):
@@ -45,15 +51,27 @@ class JwtAccessToken(BaseModel):
     def is_client_credentials(self):
         return self.gty == "client-credentials"
 
+    @root_validator(pre=True)
+    def set_extra_field(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Ensure that any additional passed in data is set on the `extra` field"""
+        extra = {}
+        new_values = {"_extra": extra}
+        model_keys = cls.__fields__.keys()
+
+        for k, v in values.items():
+            if k in model_keys:
+                new_values[k] = v
+            else:
+                extra[k] = v
+
+        return new_values
+
 
 class AuthMethod(str, Enum):
     none = "none"
     basic_auth = "basic_auth"
     oauth2 = "oauth2"
     oauth2_client_credentials = "oauth2_client_credentials"
-
-    def is_superuser_type(self):
-        return self in (AuthMethod.oauth2_client_credentials, AuthMethod.basic_auth)
 
     def is_oauth2_type(self):
         return self in (AuthMethod.oauth2_client_credentials, AuthMethod.oauth2)
@@ -89,11 +107,13 @@ class UserAuth(BaseModel):
     scopes: List[str] = []
     permissions: List[str] = []
     access_token: str = None
+    _extra: Dict[str, Any] = {}
 
     @validator("permissions", pre=True, always=True)
-    def set_all_permissions_if_superuser(cls, v, values):
-        if values["auth_method"].is_superuser_type():
-            return registry.get_all_permissions()
+    def only_add_valid_permissions(cls, v, values):
+        if v:
+            all_permissions = registry.get_all_permissions()
+            return [e for e in v if e in all_permissions]
         else:
             return v
 
@@ -108,6 +128,9 @@ class UserAuth(BaseModel):
 
     def get_user_id(self) -> str:
         return self.subject
+
+    def with_permissions(self, permissions: List[str]) -> "UserAuth":
+        return self.copy(deep=True, update={"permissions": permissions})
 
     def has_permission(self, permission: str) -> bool:
         return permission in self.permissions
@@ -125,8 +148,10 @@ class UserAuth(BaseModel):
             audience=access_token.aud,
             issued_at=access_token.iat,
             expires_at=access_token.exp,
+            scopes=access_token.scope,
             permissions=access_token.permissions,
             access_token=access_token.raw,
+            _extra=access_token._extra,
         )
 
     @classmethod
@@ -156,3 +181,6 @@ class User(BaseModel):
 
     def without_access_token(self) -> "User":
         return self.copy(deep=True, exclude={"auth": {"access_token"}})
+
+    def without_extra(self) -> "User":
+        return self.copy(deep=True, exclude={"auth": {"extra"}})

@@ -8,7 +8,7 @@ install_requires = [
 ]
 
 extras_require = {
-    "test": ["pytest >=4.0.0", "pytest-cov", "black", "isort"],
+    "test": ["aioresponses", "black", "isort", "pytest >=4.0.0", "pytest-cov"],
 }
 
 extras_require["all"] = [
