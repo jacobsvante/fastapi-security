@@ -38,7 +38,7 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development",
         "Typing :: Typed",
-        "Development Status :: 2 - Pre-alpha",
+        "Development Status :: 2 - Pre-Alpha",
         "Environment :: Web Environment",
         "Framework :: AsyncIO",
         "Intended Audience :: Developers",
