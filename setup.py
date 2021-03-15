@@ -17,7 +17,7 @@ extras_require["all"] = [
 
 setup(
     name="fastapi-security",
-    version="0.1.0",
+    version="0.2.0",
     description="Authentication and authorization as dependencies in FastAPI.",
     url="https://github.com/jmagnusson/fastapi-security",
     autho="Jacob Magnusson",
