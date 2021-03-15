@@ -57,5 +57,8 @@ def make_access_token(
     data.setdefault("iat", int(utcnow.timestamp()))
     data.setdefault("exp", int(expire_at.timestamp()))
     return jwt.encode(
-        data, private_key, algorithm=dummy_alg, headers=jwt_headers,
-    ).decode()
+        data,
+        private_key,
+        algorithm=dummy_alg,
+        headers=jwt_headers,
+    )

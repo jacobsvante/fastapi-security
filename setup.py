@@ -4,7 +4,7 @@ install_requires = [
     "aiohttp",
     "fastapi",
     "pydantic",
-    "pyjwt[crypto]",
+    "pyjwt[crypto]>=2.0",
 ]
 
 extras_require = {
