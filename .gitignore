@@ -1,7 +1,9 @@
-/.coverage
-/.pytest_cache
-/build
-/dist
 *.egg-info
 *.pyc
 *.sublime-*
+/.coverage
+/.pytest_cache
+/build
+/coverage.xml
+/dist
+/poetry.lock

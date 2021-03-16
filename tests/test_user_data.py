@@ -55,7 +55,10 @@ def test_that_existing_permissions_are_added(app, client):
 
     security.init(app, jwks_url=dummy_jwks_url, audiences=[dummy_audience])
 
-    access_token = make_access_token(sub="test-subject", permissions=["users:list"],)
+    access_token = make_access_token(
+        sub="test-subject",
+        permissions=["users:list"],
+    )
 
     with aioresponses() as mock:
         mock.get(dummy_jwks_url, payload=dummy_jwks_response_data)
@@ -87,7 +90,10 @@ def test_that_nonexisting_permissions_are_ignored(app, client):
 
     security.init(app, jwks_url=dummy_jwks_url, audiences=[dummy_audience])
 
-    access_token = make_access_token(sub="test-subject", permissions=["users:list"],)
+    access_token = make_access_token(
+        sub="test-subject",
+        permissions=["users:list"],
+    )
 
     with aioresponses() as mock:
         mock.get(dummy_jwks_url, payload=dummy_jwks_response_data)
