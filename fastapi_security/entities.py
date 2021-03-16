@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, root_validator, validator
 
@@ -54,7 +54,7 @@ class JwtAccessToken(BaseModel):
     @root_validator(pre=True)
     def set_extra_field(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Ensure that any additional passed in data is set on the `extra` field"""
-        extra = {}
+        extra: Dict[str, Any] = {}
         new_values = {"_extra": extra}
         model_keys = cls.__fields__.keys()
 
@@ -78,15 +78,15 @@ class AuthMethod(str, Enum):
 
 
 class UserInfo(BaseModel):
-    given_name: str = None
-    family_name: str = None
-    nickname: str = None
-    name: str = None
-    picture: str = None
-    locale: str = None
-    updated_at: datetime = None
-    email: str = None
-    email_verified: bool = None
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
+    nickname: Optional[str] = None
+    name: Optional[str] = None
+    picture: Optional[str] = None
+    locale: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    email: Optional[str] = None
+    email_verified: Optional[bool] = None
 
     @classmethod
     def from_oidc_endpoint(cls, data: Dict[str, Any]) -> "UserInfo":
@@ -100,13 +100,13 @@ class UserInfo(BaseModel):
 class UserAuth(BaseModel):
     subject: str
     auth_method: AuthMethod
-    issuer: str = None
+    issuer: Optional[str] = None
     audience: List[str] = []
-    issued_at: datetime = None
-    expires_at: datetime = None
+    issued_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
     scopes: List[str] = []
     permissions: List[str] = []
-    access_token: str = None
+    access_token: Optional[str] = None
     _extra: Dict[str, Any] = {}
 
     @validator("permissions", pre=True, always=True)
@@ -161,7 +161,7 @@ class UserAuth(BaseModel):
 
 class User(BaseModel):
     auth: UserAuth
-    info: UserInfo = None
+    info: Optional[UserInfo] = None
 
     @property
     def permissions(self) -> List[str]:

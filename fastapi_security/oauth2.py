@@ -147,6 +147,5 @@ class Oauth2JwtAccessTokenValidator:
     def _decode_jwt_token(
         self, public_key: _RSAPublicKey, access_token: str
     ) -> Dict[str, Any]:
-        return jwt.decode(
-            access_token, key=public_key, audience=self._audiences, algorithms=["RS256"]
-        )
+        # NOTE: jwt.decode has erroneously set key: str
+        return jwt.decode(access_token, key=public_key, audience=self._audiences, algorithms=["RS256"])  # type: ignore

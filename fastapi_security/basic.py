@@ -1,7 +1,7 @@
 import secrets
 from typing import Dict, List, Union
 
-from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBasicCredentials
+from fastapi.security.http import HTTPBasicCredentials
 
 __all__ = ()
 
@@ -18,7 +18,7 @@ class BasicAuthValidator:
     def is_configured(self) -> bool:
         return len(self._credentials) > 0
 
-    def validate(self, credentials: HTTPAuthorizationCredentials) -> bool:
+    def validate(self, credentials: HTTPBasicCredentials) -> bool:
         if not self.is_configured():
             return False
         return any(

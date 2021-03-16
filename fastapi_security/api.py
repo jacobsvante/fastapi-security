@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPBasicCredentials
@@ -103,8 +103,7 @@ class FastAPISecurity:
         return dependency
 
     def has_permission(self, permission: UserPermission) -> Callable:
-        """Dependency that raises HTTP403 if the user is missing the given permission
-        """
+        """Dependency that raises HTTP403 if the user is missing the given permission"""
 
         async def dependency(
             user: User = Depends(self.authenticated_user_or_401),
@@ -114,9 +113,7 @@ class FastAPISecurity:
 
         return dependency
 
-    def user_with_permissions(
-        self, *permissions: Tuple[UserPermission, ...]
-    ) -> Callable:
+    def user_with_permissions(self, *permissions: UserPermission) -> Callable:
         """Dependency that returns the user if it has the given permissions, otherwise
         raises HTTP403
         """
@@ -197,7 +194,8 @@ class FastAPISecurity:
 
     def _raise_forbidden(self, required_permission: str):
         raise HTTPException(
-            403, detail=f"Missing required permission {required_permission}",
+            403,
+            detail=f"Missing required permission {required_permission}",
         )
 
     def _maybe_override_permissions(self, user_auth: UserAuth) -> UserAuth:

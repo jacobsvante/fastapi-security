@@ -49,7 +49,7 @@ def make_access_token(
     utcnow = datetime.now(tz=timezone.utc)
     expire_at = utcnow + timedelta(seconds=expire_in)
 
-    data = {**extra}
+    data: Dict[str, Any] = {**extra}
 
     data["sub"] = sub
     data.setdefault("aud", dummy_audience)
@@ -58,7 +58,7 @@ def make_access_token(
     data.setdefault("exp", int(expire_at.timestamp()))
     return jwt.encode(
         data,
-        private_key,
+        private_key.decode(),
         algorithm=dummy_alg,
         headers=jwt_headers,
     )

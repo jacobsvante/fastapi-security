@@ -36,8 +36,8 @@ class OpenIdConnectDiscovery:
         """
         self._discovery_url = discovery_url
         self._discovery_cache_period = discovery_cache_period
-        self._discovery_data_cached_at = None
-        self._discovery_data = None
+        self._discovery_data_cached_at: Optional[datetime] = None
+        self._discovery_data: Optional[Dict[str, Any]] = None
 
     def is_configured(self) -> bool:
         return bool(self._discovery_url)
@@ -85,16 +85,20 @@ class OpenIdConnectDiscovery:
         return data["userinfo_endpoint"]
 
     async def _get_discovery_data(self) -> Dict[str, Any]:
-        if self._discovery_data_cached_at is None or (
-            (datetime.utcnow() - self._discovery_data_cached_at)
-            > timedelta(seconds=self._discovery_cache_period)
+        if (
+            self._discovery_data is None
+            or self._discovery_data_cached_at is None
+            or (
+                (datetime.utcnow() - self._discovery_data_cached_at)
+                > timedelta(seconds=self._discovery_cache_period)
+            )
         ):
             self._discovery_data = await self._fetch_discovery_data()
             self._discovery_data_cached_at = datetime.utcnow()
 
         return self._discovery_data
 
-    async def _fetch_discovery_data(self):
+    async def _fetch_discovery_data(self) -> Dict[str, Any]:
         timeout = aiohttp.ClientTimeout(total=10)
 
         logger.debug(f"Fetching OIDC discovery data from {self._discovery_url}")
