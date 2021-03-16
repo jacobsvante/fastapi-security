@@ -33,11 +33,11 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
-aiohttp = "^3.7.4"
-fastapi = "^0.63.0"
-pydantic = "^1.8.1"
-PyJWT = {version = ">=2.0", extras = ["crypto"]}
+python = "^3.6"
+aiohttp = "^3"
+fastapi = "^0"
+pydantic = "^1"
+PyJWT = {version = "^2", extras = ["crypto"]}
 
 [tool.poetry.dev-dependencies]
 aioresponses = "^0.7.2"
