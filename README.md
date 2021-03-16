@@ -1,6 +1,6 @@
 # FastAPI Security
 
-Implements authentication and authorization as dependencies in FastAPI.
+Add authentication and authorization to your FastAPI app via dependencies.
 
 ## Features
 
