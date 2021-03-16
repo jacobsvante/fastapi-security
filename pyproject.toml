@@ -1,5 +1,56 @@
+[tool.poetry]
+name = "fastapi-security"
+version = "0.2.0"
+description = "Add authentication and authorization to your FastAPI app via dependencies."
+authors = ["Jacob Magnusson <m@jacobian.se>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/jmagnusson/fastapi-security"
+repository = "https://github.com/jmagnusson/fastapi-security"
+documentation = "https://github.com/jmagnusson/fastapi-security"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+]
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+aiohttp = "^3.7.4"
+fastapi = "^0.63.0"
+pydantic = "^1.8.1"
+PyJWT = {version = ">=2.0", extras = ["crypto"]}
+
+[tool.poetry.dev-dependencies]
+aioresponses = "^0.7.2"
+black = "^20.8b1"
+isort = "^5.7.0"
+pytest = ">=4.0.0"
+pytest-cov = "^2.11.1"
+requests = "^2.25.1"
+mypy = "^0.812"
+
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
