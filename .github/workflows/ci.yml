@@ -1,0 +1,29 @@
+---
+name: tagged-release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  tagged-release:
+    name: Tagged Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: abatilo/actions-poetry@v2.1.0
+        with:
+          poetry-version: 3.9
+      - name: Build
+        run: poetry build
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
