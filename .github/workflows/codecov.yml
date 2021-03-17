@@ -1,0 +1,23 @@
+name: codecov
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  code_coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - uses: abatilo/actions-poetry@v2.1.0
+    - run: poetry install
+    - run: poetry run pytest --cov=fastapi_security --cov-report=xml --cov-report=term
+    - uses: codecov/codecov-action@v1
+      with:
+        files: ./coverage.xml
+        verbose: true
