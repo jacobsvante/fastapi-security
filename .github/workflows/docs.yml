@@ -1,0 +1,23 @@
+name: docs
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: abatilo/actions-poetry@v2.1.0
+        with:
+          poetry-version: 1.1.5
+      - run: poetry install
+      - run: poetry run mkdocs build
+      - uses: peaceiris/actions-gh-pages@v3.7.3
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          publish_dir: ./site

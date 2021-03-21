@@ -48,6 +48,7 @@ pytest-cov = "^2.11.1"
 requests = "^2.25.1"
 mypy = "^0.812"
 flake8 = "^3.9.0"
+mkdocs-material = "^7.0.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
