@@ -16,4 +16,4 @@ pip install fastapi-security
 
 ## Documentation
 
-[The documentation for FastAPI-Security is found here](https://fastapi-security.github.io).
+[The documentation for FastAPI-Security is found here](https://jmagnusson.github.io/fastapi-security/).
