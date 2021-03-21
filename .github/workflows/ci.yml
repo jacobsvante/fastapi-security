@@ -20,5 +20,6 @@ jobs:
     - run: poetry install
     - run: poetry run pytest -v
     - run: poetry run flake8
+    - run: poetry run mypy --ignore-missing-imports .
     - run: poetry run isort --check --diff .
     - run: poetry run black --check --diff .
