@@ -43,7 +43,7 @@ async def test_that_unparseable_token_is_invalid(caplog):
     validator.init(dummy_jwks_uri, [dummy_audience])
     parsed = await validator.parse("badDATA")
     assert (
-        "Decoding unverified JWT token failed with error: DecodeError('Not enough segments')"
+        "Decoding unverified JWT token failed with error: DecodeError('Not enough segments"
         in caplog.text
     )
     assert parsed is None
@@ -110,7 +110,7 @@ async def test_that_missing_audience_fails(caplog):
         parsed = await validator.parse(token)
 
     assert (
-        "Decoding verified JWT token failed with error: MissingRequiredClaimError('aud')"
+        "Decoding verified JWT token failed with error: MissingRequiredClaimError('aud"
         in caplog.text
     )
     assert parsed is None
