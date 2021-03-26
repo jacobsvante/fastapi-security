@@ -90,7 +90,7 @@ async def test_that_hs256_doesnt_work(caplog):
         parsed = await validator.parse(token)
 
     assert (
-        "Decoding verified JWT token failed with error: InvalidAlgorithmError('The specified alg value is not allowed')"
+        "Decoding verified JWT token failed with error: InvalidAlgorithmError('The specified alg value is not allowed"
         in caplog.text
     )
     assert parsed is None
