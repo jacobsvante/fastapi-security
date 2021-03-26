@@ -1,7 +1,7 @@
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, Optional
+import time
+from typing import Any, Dict, Iterable, List, Optional
 
 import aiohttp
 import jwt
@@ -34,11 +34,11 @@ class Oauth2JwtAccessTokenValidator:
     """
 
     def __init__(self):
-        self._jwks_url = None
-        self._audiences = None
-        self._jwks_kid_mapping = None
-        self._jwks_cache_period = DEFAULT_JWKS_RESPONSE_CACHE_PERIOD
-        self._jwks_cached_at = None
+        self._jwks_url: Optional[str] = None
+        self._audiences: Optional[List[str]] = None
+        self._jwks_kid_mapping: Dict[str, _RSAPublicKey] = None
+        self._jwks_cache_period: float = float(DEFAULT_JWKS_RESPONSE_CACHE_PERIOD)
+        self._jwks_cached_at: Optional[float] = None
 
     def init(
         self,
@@ -60,7 +60,7 @@ class Oauth2JwtAccessTokenValidator:
         """
 
         self._jwks_url = jwks_url
-        self._jwks_cache_period = jwks_cache_period
+        self._jwks_cache_period = float(jwks_cache_period)
         self._audiences = list(audiences)
 
     def is_configured(self) -> bool:
@@ -95,7 +95,7 @@ class Oauth2JwtAccessTokenValidator:
         try:
             public_key = await self._get_public_key(token_kid)
         except KeyError:
-            logger.debug("No matching kid for JWT token")
+            logger.debug("No matching `kid` for JWT token")
             return None
 
         try:
@@ -107,7 +107,7 @@ class Oauth2JwtAccessTokenValidator:
         try:
             parsed_access_token = JwtAccessToken(**decoded, raw=access_token)
         except ValidationError as ex:
-            logger.debug(f"Failed to parse JWT token with validation error: {ex!r}")
+            logger.debug(f"Failed to parse JWT token with {ex}")
             return None
 
         return parsed_access_token
@@ -117,18 +117,29 @@ class Oauth2JwtAccessTokenValidator:
         return mapping[kid]
 
     async def _get_jwks_kid_mapping(self) -> Dict[str, _RSAPublicKey]:
-        if self._jwks_cached_at is None or (
-            (datetime.utcnow() - self._jwks_cached_at)
-            > timedelta(seconds=self._jwks_cache_period)
+        if (
+            self._jwks_cached_at is None
+            or (time.monotonic() - self._jwks_cached_at) > self._jwks_cache_period
         ):
-            jwks_data = await self._fetch_jwks_data()
-            self._jwks_kid_mapping = {
-                k["kid"]: RSAAlgorithm.from_jwk(json.dumps(k))
-                for k in jwks_data["keys"]
-                if k["kty"] == "RSA" and k["alg"] == "RS256"
-            }
-            self._jwks_cached_at = datetime.utcnow()
-            assert len(self._jwks_kid_mapping) > 0
+            try:
+                jwks_data = await self._fetch_jwks_data()
+            except Exception as ex:
+                if self._jwks_kid_mapping is None:
+                    raise
+                else:
+                    logger.info(
+                        f"Failed to refresh JWKS kid mapping, re-using old data. "
+                        f"Exception was: {ex!r}"
+                    )
+                    self._jwks_cached_at = time.monotonic()
+            else:
+                self._jwks_kid_mapping = {
+                    k["kid"]: RSAAlgorithm.from_jwk(json.dumps(k))
+                    for k in jwks_data["keys"]
+                    if k["kty"] == "RSA" and k["alg"] == "RS256"
+                }
+                self._jwks_cached_at = time.monotonic()
+                assert len(self._jwks_kid_mapping) > 0
 
         return self._jwks_kid_mapping
 
@@ -139,10 +150,7 @@ class Oauth2JwtAccessTokenValidator:
 
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(self._jwks_url) as response:
-                try:
-                    return await response.json()
-                except Exception as ex:
-                    raise RuntimeError(f"Failed to load JWKS data with exception: {ex}")
+                return await response.json()
 
     def _decode_jwt_token(
         self, public_key: _RSAPublicKey, access_token: str

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+import time
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -16,8 +16,12 @@ class OpenIdConnectDiscovery:
     """Retrieve info from OpenID Connect (OIDC) endpoints"""
 
     def __init__(self):
-        self._discovery_url = None
-        self._discovery_cache_period = DEFAULT_DISCOVERY_RESPONSE_CACHE_PERIOD
+        self._discovery_url: Optional[str] = None
+        self._discovery_data_cached_at: Optional[float] = None
+        self._discovery_cache_period: float = float(
+            DEFAULT_DISCOVERY_RESPONSE_CACHE_PERIOD
+        )
+        self._discovery_data: Optional[Dict[str, Any]] = None
 
     def init(
         self,
@@ -35,9 +39,7 @@ class OpenIdConnectDiscovery:
                 How many seconds to cache the OpenID Discovery endpoint response. Defaults to 1 hour.
         """
         self._discovery_url = discovery_url
-        self._discovery_cache_period = discovery_cache_period
-        self._discovery_data_cached_at: Optional[datetime] = None
-        self._discovery_data: Optional[Dict[str, Any]] = None
+        self._discovery_cache_period = float(discovery_cache_period)
 
     def is_configured(self) -> bool:
         return bool(self._discovery_url)
@@ -63,9 +65,14 @@ class OpenIdConnectDiscovery:
         else:
             return UserInfo.from_oidc_endpoint(user_info)
 
+    async def get_jwks_uri(self) -> str:
+        """Get or fetch the JWKS URI"""
+        data = await self.get_discovery_data()
+        return data["jwks_uri"]
+
     async def _fetch_user_info(self, access_token: str) -> Optional[Dict[str, Any]]:
         timeout = aiohttp.ClientTimeout(total=10)
-        url = await self._get_user_info_endpoint()
+        url = await self.get_user_info_endpoint()
         headers = {"Authorization": f"Bearer {access_token}"}
 
         logger.debug(f"Fetching user info from {url}")
@@ -80,29 +87,41 @@ class OpenIdConnectDiscovery:
                     )
                     return None
 
-    async def _get_user_info_endpoint(self) -> str:
-        data = await self._get_discovery_data()
+    async def get_user_info_endpoint(self) -> str:
+        data = await self.get_discovery_data()
         return data["userinfo_endpoint"]
 
-    async def _get_discovery_data(self) -> Dict[str, Any]:
+    async def get_discovery_data(self) -> Dict[str, Any]:
         if (
             self._discovery_data is None
             or self._discovery_data_cached_at is None
             or (
-                (datetime.utcnow() - self._discovery_data_cached_at)
-                > timedelta(seconds=self._discovery_cache_period)
+                (time.monotonic() - self._discovery_data_cached_at)
+                > self._discovery_cache_period
             )
         ):
-            self._discovery_data = await self._fetch_discovery_data()
-            self._discovery_data_cached_at = datetime.utcnow()
+            try:
+                self._discovery_data = await self._fetch_discovery_data()
+            except Exception as ex:
+                if self._discovery_data is None:
+                    raise
+                else:
+                    logger.info(
+                        f"Failed to refresh OIDC discovery data, re-using old data. "
+                        f"Exception was: {ex!r}"
+                    )
+                    self._discovery_data_cached_at = time.monotonic()
+            else:
+                self._discovery_data_cached_at = time.monotonic()
 
         return self._discovery_data
 
     async def _fetch_discovery_data(self) -> Dict[str, Any]:
         timeout = aiohttp.ClientTimeout(total=10)
+        assert self._discovery_url, "No OIDC discovery URL specified"
 
         logger.debug(f"Fetching OIDC discovery data from {self._discovery_url}")
 
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(self._discovery_url) as response:
+        async with aiohttp.ClientSession(timeout=timeout, raise_for_status=True) as s:
+            async with s.get(self._discovery_url) as response:
                 return await response.json()

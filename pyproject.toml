@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-security"
-version = "0.2.0"
+version = "0.3.0"
 description = "Add authentication and authorization to your FastAPI app via dependencies."
 authors = ["Jacob Magnusson <m@jacobian.se>"]
 license = "MIT"
@@ -49,6 +49,8 @@ requests = "^2.25.1"
 mypy = "^0.812"
 flake8 = "^3.9.0"
 mkdocs-material = "^7.0.6"
+pytest-asyncio = "^0.14.0"
+uvicorn = "^0.13.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

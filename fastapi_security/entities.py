@@ -2,9 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, root_validator, validator
-
-from . import registry
+from pydantic import BaseModel, Field, validator
 
 __all__ = ("User",)
 
@@ -29,9 +27,6 @@ class JwtAccessToken(BaseModel):
         description="Permissions (auth0 specific, intended for first-party app authorization)",
     )
     raw: str = Field(..., description="The raw access token")
-    _extra: Dict[str, Any] = Field(
-        {}, description="Any extra fields that were provided in the access token"
-    )
 
     @validator("aud", pre=True, always=True)
     def aud_to_list(cls, v):
@@ -50,21 +45,6 @@ class JwtAccessToken(BaseModel):
 
     def is_client_credentials(self):
         return self.gty == "client-credentials"
-
-    @root_validator(pre=True)
-    def set_extra_field(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Ensure that any additional passed in data is set on the `extra` field"""
-        extra: Dict[str, Any] = {}
-        new_values = {"_extra": extra}
-        model_keys = cls.__fields__.keys()
-
-        for k, v in values.items():
-            if k in model_keys:
-                new_values[k] = v
-            else:
-                extra[k] = v
-
-        return new_values
 
 
 class AuthMethod(str, Enum):
@@ -107,15 +87,6 @@ class UserAuth(BaseModel):
     scopes: List[str] = []
     permissions: List[str] = []
     access_token: Optional[str] = None
-    _extra: Dict[str, Any] = {}
-
-    @validator("permissions", pre=True, always=True)
-    def only_add_valid_permissions(cls, v, values):
-        if v:
-            all_permissions = registry.get_all_permissions()
-            return [e for e in v if e in all_permissions]
-        else:
-            return v
 
     def is_authenticated(self) -> bool:
         return self.auth_method is not AuthMethod.none
@@ -151,7 +122,6 @@ class UserAuth(BaseModel):
             scopes=access_token.scope,
             permissions=access_token.permissions,
             access_token=access_token.raw,
-            _extra=access_token._extra,
         )
 
     @classmethod
@@ -181,6 +151,3 @@ class User(BaseModel):
 
     def without_access_token(self) -> "User":
         return self.copy(deep=True, exclude={"auth": {"access_token"}})
-
-    def without_extra(self) -> "User":
-        return self.copy(deep=True, exclude={"auth": {"extra"}})

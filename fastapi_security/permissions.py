@@ -1,6 +1,9 @@
-from . import registry
+from typing import Dict, Iterable, Union
 
-__all__ = ("UserPermission",)
+__all__ = ("PermissionOverrides",)
+
+
+PermissionOverrides = Dict[str, Union[str, Iterable[str]]]
 
 
 class UserPermission:
@@ -8,13 +11,14 @@ class UserPermission:
 
     Creating a new permission is done like this:
 
-        create_item_permission = UserPermission("item:create")
+        security = FastAPISecurity()
+        create_item_permission = security.user_permission("item:create")
 
     Usage:
 
         @app.post(
             "/products",
-            dependencies=[Depends(security.has_permission(create_item_permission))]
+            dependencies=[Depends(security.user_holding(create_item_permission))]
         )
         def create_product(...):
             ...
@@ -22,7 +26,7 @@ class UserPermission:
     Or:
         @app.post("/products")
         def create_product(
-            user: Depends(security.user_with_permissions(create_item_permission))
+            user: Depends(security.user_holding(create_item_permission))
         ):
             ...
 
@@ -30,10 +34,9 @@ class UserPermission:
 
     def __init__(self, identifier: str):
         self.identifier = identifier
-        registry.add_permission(identifier)
 
     def __str__(self):
         return self.identifier
 
     def __repr__(self):
-        return f"<UserPermission: {self.identifier}>"
+        return f"{self.__class__.__name__}({self.identifier})"

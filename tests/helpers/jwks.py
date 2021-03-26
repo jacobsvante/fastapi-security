@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 import jwt
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
@@ -26,7 +26,7 @@ _jwk = json.loads(RSAAlgorithm.to_jwk(public_key_obj))
 
 dummy_alg = "RS256"
 dummy_kid = "test123"
-dummy_jwks_url = "https://identity-provider/.well-known/jwks.json"
+dummy_jwks_uri = "https://identity-provider/.well-known/jwks.json"
 dummy_audience = "https://some-resource"
 dummy_jwks_response_data = {
     "keys": [
@@ -40,12 +40,16 @@ dummy_jwks_response_data = {
         },
     ],
 }
-jwt_headers = {"alg": dummy_alg, "typ": "JWT", "kid": dummy_kid}
+dummy_jwt_headers = {"alg": dummy_alg, "typ": "JWT", "kid": dummy_kid}
 
 
-def make_access_token(
-    *, sub: str, expire_in: int = 3600, **extra: Dict[str, Any]
-) -> str:
+def make_access_token_data(
+    *,
+    sub: str,
+    expire_in: int = 3600,
+    delete_fields: Iterable[str] = None,
+    **extra: Dict[str, Any],
+) -> Dict[str, Any]:
     utcnow = datetime.now(tz=timezone.utc)
     expire_at = utcnow + timedelta(seconds=expire_in)
 
@@ -56,9 +60,29 @@ def make_access_token(
     data.setdefault("iss", "https://identity-provider/")
     data.setdefault("iat", int(utcnow.timestamp()))
     data.setdefault("exp", int(expire_at.timestamp()))
+
+    for field in delete_fields or []:
+        if field in data:
+            del data[field]
+
+    return data
+
+
+def make_access_token(
+    *,
+    sub: str,
+    expire_in: int = 3600,
+    delete_fields: Iterable[str] = None,
+    headers: Dict[str, str] = None,
+    **extra: Dict[str, Any],
+) -> str:
+    data = make_access_token_data(
+        sub=sub, expire_in=expire_in, delete_fields=delete_fields, **extra
+    )
+    headers = headers or dummy_jwt_headers
     return jwt.encode(
         data,
         private_key.decode(),
         algorithm=dummy_alg,
-        headers=jwt_headers,
+        headers=headers,
     )

@@ -1,17 +1,15 @@
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Iterable, List, Optional, Type
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import HTTPBasicCredentials
+from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 
-from . import registry
-from .basic import BasicAuthValidator
+from .basic import BasicAuthValidator, IterableOfHTTPBasicCredentials
 from .entities import AuthMethod, User, UserAuth, UserInfo
 from .exceptions import AuthNotConfigured
 from .oauth2 import Oauth2JwtAccessTokenValidator
 from .oidc import OpenIdConnectDiscovery
-from .permissions import UserPermission
+from .permissions import PermissionOverrides, UserPermission
 from .schemes import http_basic_scheme, jwt_bearer_scheme
 
 logger = logging.getLogger(__name__)
@@ -25,34 +23,60 @@ class FastAPISecurity:
     Must be initialized after object creation via the `init()` method.
     """
 
-    def __init__(self):
+    def __init__(self, *, user_permission_class: Type[UserPermission] = UserPermission):
         self.basic_auth = BasicAuthValidator()
         self.oauth2_jwt = Oauth2JwtAccessTokenValidator()
         self.oidc_discovery = OpenIdConnectDiscovery()
-        self._permission_overrides = None
+        self._permission_overrides: PermissionOverrides = {}
+        self._user_permission_class = user_permission_class
+        self._all_permissions: List[UserPermission] = []
+        self._oauth2_init_through_oidc = False
+        self._oauth2_audiences: List[str] = []
 
-    def init(
-        self,
-        app: FastAPI,
-        basic_auth_credentials: List[HTTPBasicCredentials] = None,
-        permission_overrides: Dict[str, List[str]] = None,
-        jwks_url: str = None,
-        audiences: List[str] = None,
-        oidc_discovery_url: str = None,
+    def init_basic_auth(self, basic_auth_credentials: IterableOfHTTPBasicCredentials):
+        self.basic_auth.init(basic_auth_credentials)
+
+    def init_oauth2_through_oidc(
+        self, oidc_discovery_url: str, *, audiences: Iterable[str] = None
     ):
-        self._permission_overrides = permission_overrides
+        """Initialize OIDC and OAuth2 authentication/authorization
 
-        if basic_auth_credentials:
-            # Initialize basic auth (superusers with all permissions)
-            self.basic_auth.init(basic_auth_credentials)
+        OAuth2 JWKS URL is lazily fetched from the OIDC endpoint once it's needed for the first time.
 
-        if jwks_url:
-            # # Initialize OAuth 2.0 - user permissions are required for all flows
-            # # except Client Credentials
-            self.oauth2_jwt.init(jwks_url, audiences=audiences or [])
+        This method is preferred over `init_oauth2_through_jwks` as you get all the
+        benefits of OIDC, with less configuration supplied.
+        """
+        self._oauth2_audiences.extend(audiences or [])
+        self.oidc_discovery.init(oidc_discovery_url)
 
-        if oidc_discovery_url and self.oauth2_jwt.is_configured():
-            self.oidc_discovery.init(oidc_discovery_url)
+    def init_oauth2_through_jwks(
+        self, jwks_uri: str, *, audiences: Iterable[str] = None
+    ):
+        """Initialize OAuth2
+
+        It's recommended to use `init_oauth2_through_oidc` instead.
+        """
+        self._oauth2_audiences.extend(audiences or [])
+        self.oauth2_jwt.init(jwks_uri, audiences=self._oauth2_audiences)
+
+    def add_permission_overrides(self, overrides: PermissionOverrides):
+        """Add wildcard or specific permissions to basic auth and/or OAuth2 users
+
+        Example:
+            security = FastAPISecurity()
+            create_product = security.user_permission("products:create")
+
+            # Give all permissions to the user johndoe
+            security.add_permission_overrides({"johndoe": "*"})
+
+            # Give the OAuth2 user `7ZmI5ycgNHeZ9fHPZZwTNbIRd9Ectxca@clients` the
+            # "products:create" permission.
+            security.add_permission_overrides({
+                "7ZmI5ycgNHeZ9fHPZZwTNbIRd9Ectxca@clients": ["products:create"],
+            })
+
+        """
+        self._permission_overrides.update(overrides)
 
     @property
     def user(self) -> Callable:
@@ -79,7 +103,7 @@ class FastAPISecurity:
         """Dependency that returns User object with user info, authenticated or not"""
 
         async def dependency(user_auth: UserAuth = Depends(self._user_auth)):
-            if user_auth.is_oauth2():
+            if user_auth.is_oauth2() and user_auth.access_token:
                 info = await self.oidc_discovery.get_user_info(user_auth.access_token)
             else:
                 info = UserInfo.make_dummy()
@@ -94,7 +118,7 @@ class FastAPISecurity:
         """
 
         async def dependency(user_auth: UserAuth = Depends(self._user_auth_or_401)):
-            if user_auth.is_oauth2():
+            if user_auth.is_oauth2() and user_auth.access_token:
                 info = await self.oidc_discovery.get_user_info(user_auth.access_token)
             else:
                 info = UserInfo.make_dummy()
@@ -102,18 +126,12 @@ class FastAPISecurity:
 
         return dependency
 
-    def has_permission(self, permission: UserPermission) -> Callable:
-        """Dependency that raises HTTP403 if the user is missing the given permission"""
+    def user_permission(self, identifier: str) -> UserPermission:
+        perm = self._user_permission_class(identifier)
+        self._all_permissions.append(perm)
+        return perm
 
-        async def dependency(
-            user: User = Depends(self.authenticated_user_or_401),
-        ) -> User:
-            self._has_permission_or_raise_forbidden(user, permission)
-            return user
-
-        return dependency
-
-    def user_with_permissions(self, *permissions: UserPermission) -> Callable:
+    def user_holding(self, *permissions: UserPermission) -> Callable:
         """Dependency that returns the user if it has the given permissions, otherwise
         raises HTTP403
         """
@@ -137,11 +155,16 @@ class FastAPISecurity:
             ),
             http_credentials: HTTPAuthorizationCredentials = Depends(http_basic_scheme),
         ) -> Optional[UserAuth]:
-            if not any(
-                [self.oauth2_jwt.is_configured(), self.basic_auth.is_configured()]
-            ):
+            oidc_configured = self.oidc_discovery.is_configured()
+            oauth2_configured = self.oauth2_jwt.is_configured()
+            basic_auth_configured = self.basic_auth.is_configured()
 
+            if not any([oidc_configured, oauth2_configured, basic_auth_configured]):
                 raise AuthNotConfigured()
+
+            if oidc_configured and not oauth2_configured:
+                jwks_uri = await self.oidc_discovery.get_jwks_uri()
+                self.init_oauth2_through_jwks(jwks_uri)
 
             if bearer_credentials is not None:
                 bearer_token = bearer_credentials.credentials
@@ -199,16 +222,21 @@ class FastAPISecurity:
         )
 
     def _maybe_override_permissions(self, user_auth: UserAuth) -> UserAuth:
-        overrides = (self._permission_overrides or {}).get(user_auth.subject)
+        overrides = self._permission_overrides.get(user_auth.subject)
+
+        all_permission_identifiers = [p.identifier for p in self._all_permissions]
 
         if overrides is None:
-            return user_auth
-
-        all_permissions = registry.get_all_permissions()
-
-        if "*" in overrides:
-            return user_auth.with_permissions(all_permissions)
+            return user_auth.with_permissions(
+                [
+                    incoming_id
+                    for incoming_id in user_auth.permissions
+                    if incoming_id in all_permission_identifiers
+                ]
+            )
+        elif "*" in overrides:
+            return user_auth.with_permissions(all_permission_identifiers)
         else:
             return user_auth.with_permissions(
-                [p for p in overrides if p in all_permissions]
+                [p for p in overrides if p in all_permission_identifiers]
             )
