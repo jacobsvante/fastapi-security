@@ -5,9 +5,9 @@ description = "Add authentication and authorization to your FastAPI app via depe
 authors = ["Jacob Magnusson <m@jacobian.se>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/jmagnusson/fastapi-security"
+homepage = "https://jmagnusson.github.io/fastapi-security/"
 repository = "https://github.com/jmagnusson/fastapi-security"
-documentation = "https://github.com/jmagnusson/fastapi-security"
+documentation = "https://jmagnusson.github.io/fastapi-security/"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
