@@ -3,14 +3,19 @@ default_language_version:
 
 repos:
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.0
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/isort
-    rev: 5.6.3
+    rev: 5.8.0
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
     rev: 20.8b1
     hooks:
       - id: black
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.812
+    hooks:
+      - id: mypy
+        additional_dependencies: [pydantic]
