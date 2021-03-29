@@ -43,7 +43,7 @@ PyJWT = {version = "^2", extras = ["crypto"]}
 aioresponses = "^0.7.2"
 black = "^20.8b1"
 isort = "^5.7.0"
-pytest = ">=4.0.0"
+pytest = "^6"
 pytest-cov = "^2.11.1"
 requests = "^2.25.1"
 mypy = "^0.812"
@@ -59,3 +59,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 88
 target-version = ['py37', 'py38']
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
