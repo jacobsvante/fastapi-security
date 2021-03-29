@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterable, List, Optional, Type
+from typing import Callable, Dict, Iterable, List, Optional, Type
 
 from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
@@ -27,7 +27,7 @@ class FastAPISecurity:
         self.basic_auth = BasicAuthValidator()
         self.oauth2_jwt = Oauth2JwtAccessTokenValidator()
         self.oidc_discovery = OpenIdConnectDiscovery()
-        self._permission_overrides: PermissionOverrides = {}
+        self._permission_overrides: Dict[str, List[str]] = {}
         self._user_permission_class = user_permission_class
         self._all_permissions: List[UserPermission] = []
         self._oauth2_init_through_oidc = False
@@ -77,7 +77,7 @@ class FastAPISecurity:
 
         """
         for user, val in overrides.items():
-            lst = self._permission_overrides.setdefault(user, [])
+            lst: List[str] = self._permission_overrides.setdefault(user, [])
             if isinstance(val, str):
                 assert (
                     val == "*"

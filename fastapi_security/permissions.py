@@ -1,9 +1,9 @@
-from typing import Dict, Iterable, Union
+from typing import Dict, MutableSequence, Union
 
 __all__ = ("PermissionOverrides",)
 
 
-PermissionOverrides = Dict[str, Union[str, Iterable[str]]]
+PermissionOverrides = Dict[str, Union[str, MutableSequence[str]]]
 
 
 class UserPermission:
