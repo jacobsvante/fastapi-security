@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-security"
-version = "0.3.0"
+version = "0.3.1"
 description = "Add authentication and authorization to your FastAPI app via dependencies."
 authors = ["Jacob Magnusson <m@jacobian.se>"]
 license = "MIT"

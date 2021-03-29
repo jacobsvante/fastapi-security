@@ -76,7 +76,18 @@ class FastAPISecurity:
             })
 
         """
-        self._permission_overrides.update(overrides)
+        for user, val in overrides.items():
+            lst = self._permission_overrides.setdefault(user, [])
+            if isinstance(val, str):
+                assert (
+                    val == "*"
+                ), "Only `*` is accepted as permission override when specified as a string"
+                logger.debug(f"Adding wildcard `*` permission to user {user}")
+                lst.append("*")
+            else:
+                for p in val:
+                    logger.debug(f"Adding permission {p} to user {user}")
+                    lst.append(p)
 
     @property
     def user(self) -> Callable:
