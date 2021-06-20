@@ -220,7 +220,7 @@ class FastAPISecurity:
             raise HTTPException(
                 status_code=401,
                 detail="Could not validate credentials",
-                headers=Headers(
+                headers=Headers(  # type: ignore[arg-type]
                     raw=[(b"WWW-Authenticate", o.encode("latin-1")) for o in options],
                 ),
             )
