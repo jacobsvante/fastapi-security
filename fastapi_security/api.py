@@ -3,6 +3,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Type
 
 from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
+from starlette.datastructures import Headers
 
 from .basic import BasicAuthValidator, IterableOfHTTPBasicCredentials
 from .entities import AuthMethod, User, UserAuth, UserInfo
@@ -209,15 +210,19 @@ class FastAPISecurity:
             if user_auth and user_auth.is_authenticated():
                 return user_auth
 
-            if self.basic_auth.is_configured() and http_credentials is not None:
-                www_authenticate_header_val = "Basic"
-            else:
-                www_authenticate_header_val = "Bearer"
+            options = []
+
+            if self.basic_auth.is_configured():
+                options.append("Basic")
+            if self.oauth2_jwt.is_configured():
+                options.append("Bearer")
 
             raise HTTPException(
                 status_code=401,
                 detail="Could not validate credentials",
-                headers={"WWW-Authenticate": www_authenticate_header_val},
+                headers=Headers(
+                    raw=[(b"WWW-Authenticate", o.encode("latin-1")) for o in options],
+                ),
             )
 
         return dependency
