@@ -5,7 +5,12 @@ from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 from starlette.datastructures import Headers
 
-from .basic import BasicAuthValidator, IterableOfHTTPBasicCredentials
+from .basic import (
+    BasicAuthValidator,
+    BasicAuthWithDigestValidator,
+    IterableOfHTTPBasicCredentials,
+    IterableOfHTTPBasicCredentialsDigest,
+)
 from .entities import AuthMethod, User, UserAuth, UserInfo
 from .exceptions import AuthNotConfigured
 from .oauth2 import Oauth2JwtAccessTokenValidator
@@ -26,6 +31,7 @@ class FastAPISecurity:
 
     def __init__(self, *, user_permission_class: Type[UserPermission] = UserPermission):
         self.basic_auth = BasicAuthValidator()
+        self.basic_auth_with_digest = BasicAuthWithDigestValidator()
         self.oauth2_jwt = Oauth2JwtAccessTokenValidator()
         self.oidc_discovery = OpenIdConnectDiscovery()
         self._permission_overrides: Dict[str, List[str]] = {}
@@ -36,6 +42,9 @@ class FastAPISecurity:
 
     def init_basic_auth(self, basic_auth_credentials: IterableOfHTTPBasicCredentials):
         self.basic_auth.init(basic_auth_credentials)
+
+    def init_basic_auth_with_digest(self, salt: str, basic_auth_with_digest_credentials: IterableOfHTTPBasicCredentialsDigest):
+        self.basic_auth_with_digest.init(salt, basic_auth_with_digest_credentials)
 
     def init_oauth2_through_oidc(
         self, oidc_discovery_url: str, *, audiences: Iterable[str] = None
@@ -169,7 +178,7 @@ class FastAPISecurity:
         ) -> Optional[UserAuth]:
             oidc_configured = self.oidc_discovery.is_configured()
             oauth2_configured = self.oauth2_jwt.is_configured()
-            basic_auth_configured = self.basic_auth.is_configured()
+            basic_auth_configured = self.basic_auth.is_configured() or self.basic_auth_with_digest.is_configured()
 
             if not any([oidc_configured, oauth2_configured, basic_auth_configured]):
                 raise AuthNotConfigured()
@@ -185,8 +194,12 @@ class FastAPISecurity:
                     return self._maybe_override_permissions(
                         UserAuth.from_jwt_access_token(access_token)
                     )
-            elif http_credentials is not None and self.basic_auth.is_configured():
-                if self.basic_auth.validate(http_credentials):
+            elif http_credentials is not None:
+                is_valid = (
+                    self.basic_auth.validate(http_credentials) or
+                    self.basic_auth_with_digest.validate(http_credentials)
+                )
+                if is_valid:
                     return self._maybe_override_permissions(
                         UserAuth(
                             subject=http_credentials.username,

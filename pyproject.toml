@@ -38,6 +38,7 @@ aiohttp = "^3"
 fastapi = "^0"
 pydantic = "^1"
 PyJWT = {version = "^2", extras = ["crypto"]}
+cryptography = "^3.4.7"
 
 [tool.poetry.dev-dependencies]
 aioresponses = "^0.7.2"
