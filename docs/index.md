@@ -22,4 +22,4 @@ pip install fastapi-security
 
 ## Usage example
 
-An example app using FastAPI-Security [can be found here](https://github.com/jmagnusson/fastapi-security/tree/main/examples).
+An example app using FastAPI-Security [can be found here](https://github.com/jacobsvante/fastapi-security/tree/main/examples).
