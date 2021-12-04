@@ -1,8 +1,7 @@
 from fastapi import Depends
 
 from fastapi_security import FastAPISecurity, HTTPBasicCredentials, User
-from fastapi_security.basic import BasicAuthValidator
-from fastapi_security.basic import generate_digest
+from fastapi_security.basic import BasicAuthValidator, generate_digest
 
 from ..helpers.jwks import dummy_audience, dummy_jwks_uri
 
@@ -68,16 +67,18 @@ def test_that_basic_auth_accepts_correct_credentials(app, client):
     assert resp.status_code == 200
 
 
-def test_that_basic_auth_with_digest_rejects_incorrect_credentials(app, client):
+def test_that_basic_auth_with_digest_rejects_credentials_with_wrong_user_or_password(
+    app, client
+):
     security = FastAPISecurity()
 
     @app.get("/")
     def get_products(user: User = Depends(security.authenticated_user_or_401)):
         return []
 
-    pass_digest = generate_digest('salt123', 'pass')
-    credentials = [{"username": "user", "digest": pass_digest}]
-    security.init_basic_auth_with_digest('salt123', credentials)
+    pass_digest = generate_digest("pass", salt="salt123")
+    credentials = [{"username": "user", "password": pass_digest}]
+    security.init_basic_auth_with_digest(credentials, salt="salt123")
 
     resp = client.get("/")
     assert resp.status_code == 401
@@ -92,6 +93,23 @@ def test_that_basic_auth_with_digest_rejects_incorrect_credentials(app, client):
     assert resp.status_code == 401
 
 
+def test_that_basic_auth_with_digest_rejects_credentials_when_salt_does_not_match(
+    app, client
+):
+    security = FastAPISecurity()
+
+    @app.get("/")
+    def get_products(user: User = Depends(security.authenticated_user_or_401)):
+        return []
+
+    pass_digest = generate_digest("pass", salt="salt123")
+    credentials = [{"username": "user", "password": pass_digest}]
+    security.init_basic_auth_with_digest(credentials, salt="salt456")
+
+    resp = client.get("/", auth=("user", "pass"))
+    assert resp.status_code == 401
+
+
 def test_that_basic_auth_with_digest_accepts_correct_credentials(app, client):
     security = FastAPISecurity()
 
@@ -99,9 +117,9 @@ def test_that_basic_auth_with_digest_accepts_correct_credentials(app, client):
     def get_products(user: User = Depends(security.authenticated_user_or_401)):
         return []
 
-    pass_digest = generate_digest('salt123', 'pass')
-    credentials = [{"username": "user", "digest": pass_digest}]
-    security.init_basic_auth_with_digest('salt123', credentials)
+    pass_digest = generate_digest("pass", salt="salt123")
+    credentials = [{"username": "user", "password": pass_digest}]
+    security.init_basic_auth_with_digest(credentials, salt="salt123")
 
     resp = client.get("/", auth=("user", "pass"))
     assert resp.status_code == 200

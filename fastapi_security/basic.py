@@ -4,25 +4,12 @@ from typing import Dict, Iterable, List, Union
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import SHA512, Hash
-
 from fastapi.security.http import HTTPBasicCredentials
 
 __all__ = ("HTTPBasicCredentials", "generate_digest")
 
 
-from pydantic import BaseModel
-
-
-class HTTPBasicCredentialsDigest(BaseModel):
-    username: str
-    digest: str
-
-
 IterableOfHTTPBasicCredentials = Iterable[Union[HTTPBasicCredentials, Dict]]
-
-IterableOfHTTPBasicCredentialsDigest = Iterable[
-    Union[HTTPBasicCredentialsDigest, Dict]
-]
 
 
 class BasicAuthValidator:
@@ -30,7 +17,7 @@ class BasicAuthValidator:
         self._credentials = []
 
     def init(self, credentials: IterableOfHTTPBasicCredentials):
-        self._credentials = self._make_credentials(credentials)
+        self._credentials = _make_credentials(credentials)
 
     def is_configured(self) -> bool:
         return len(self._credentials) > 0
@@ -46,23 +33,15 @@ class BasicAuthValidator:
             for c in self._credentials
         )
 
-    def _make_credentials(
-        self, credentials: IterableOfHTTPBasicCredentials
-    ) -> List[HTTPBasicCredentials]:
-        return [
-            c if isinstance(c, HTTPBasicCredentials) else HTTPBasicCredentials(**c)
-            for c in credentials
-        ]
-
 
 class BasicAuthWithDigestValidator:
     def __init__(self):
-        self._salt = None
         self._credentials = []
+        self._salt = None
 
-    def init(self, salt: str, credentials: IterableOfHTTPBasicCredentialsDigest):
+    def init(self, credentials: IterableOfHTTPBasicCredentials, *, salt: str):
+        self._credentials = _make_credentials(credentials)
         self._salt = salt
-        self._credentials = self._make_credentials(credentials)
 
     def is_configured(self) -> bool:
         return self._salt and len(self._credentials) > 0
@@ -73,27 +52,30 @@ class BasicAuthWithDigestValidator:
         return any(
             (
                 secrets.compare_digest(c.username, credentials.username)
-                and c.digest == self.generate_digest(self._salt, credentials.password)
+                and c.password == self.generate_digest(credentials.password)
             )
             for c in self._credentials
         )
 
     def generate_digest(self, secret: str):
         if not self._salt:
-            raise ValueError('BasicAuthWithDigestValidator: cannot generate digest, salt is empty')
-        return generate_digest(self._salt, secret)
-
-    def _make_credentials(
-        self, credentials: IterableOfHTTPBasicCredentialsDigest
-    ) -> List[HTTPBasicCredentialsDigest]:
-        return [
-            c if isinstance(c, HTTPBasicCredentialsDigest) else HTTPBasicCredentialsDigest(**c)
-            for c in credentials
-        ]
+            raise ValueError(
+                "BasicAuthWithDigestValidator: cannot generate digest, salt is empty"
+            )
+        return generate_digest(secret, salt=self._salt)
 
 
-def generate_digest(salt: str, secret: str):
+def _make_credentials(
+    credentials: IterableOfHTTPBasicCredentials,
+) -> List[HTTPBasicCredentials]:
+    return [
+        c if isinstance(c, HTTPBasicCredentials) else HTTPBasicCredentials(**c)
+        for c in credentials
+    ]
+
+
+def generate_digest(secret: str, *, salt: str):
     hash_obj = Hash(algorithm=SHA512(), backend=default_backend())
-    hash_obj.update((salt + secret).encode('latin1'))
+    hash_obj.update((salt + secret).encode("latin1"))
     result = hash_obj.finalize()
-    return urlsafe_b64encode(result).decode('latin1')
+    return urlsafe_b64encode(result).decode("latin1")

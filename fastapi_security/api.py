@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Type
+from typing import Callable, Dict, Iterable, List, Optional, Type, Union
 
 from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
@@ -9,7 +9,6 @@ from .basic import (
     BasicAuthValidator,
     BasicAuthWithDigestValidator,
     IterableOfHTTPBasicCredentials,
-    IterableOfHTTPBasicCredentialsDigest,
 )
 from .entities import AuthMethod, User, UserAuth, UserInfo
 from .exceptions import AuthNotConfigured
@@ -30,8 +29,8 @@ class FastAPISecurity:
     """
 
     def __init__(self, *, user_permission_class: Type[UserPermission] = UserPermission):
+        self.basic_auth: Union[BasicAuthValidator, BasicAuthWithDigestValidator]
         self.basic_auth = BasicAuthValidator()
-        self.basic_auth_with_digest = BasicAuthWithDigestValidator()
         self.oauth2_jwt = Oauth2JwtAccessTokenValidator()
         self.oidc_discovery = OpenIdConnectDiscovery()
         self._permission_overrides: Dict[str, List[str]] = {}
@@ -41,10 +40,19 @@ class FastAPISecurity:
         self._oauth2_audiences: List[str] = []
 
     def init_basic_auth(self, basic_auth_credentials: IterableOfHTTPBasicCredentials):
-        self.basic_auth.init(basic_auth_credentials)
+        new_basic_auth = BasicAuthValidator()
+        new_basic_auth.init(basic_auth_credentials)
+        self.basic_auth = new_basic_auth
 
-    def init_basic_auth_with_digest(self, salt: str, basic_auth_with_digest_credentials: IterableOfHTTPBasicCredentialsDigest):
-        self.basic_auth_with_digest.init(salt, basic_auth_with_digest_credentials)
+    def init_basic_auth_with_digest(
+        self,
+        basic_auth_with_digest_credentials: IterableOfHTTPBasicCredentials,
+        *,
+        salt: str,
+    ):
+        new_basic_auth = BasicAuthWithDigestValidator()
+        new_basic_auth.init(basic_auth_with_digest_credentials, salt=salt)
+        self.basic_auth = new_basic_auth
 
     def init_oauth2_through_oidc(
         self, oidc_discovery_url: str, *, audiences: Iterable[str] = None
@@ -178,7 +186,7 @@ class FastAPISecurity:
         ) -> Optional[UserAuth]:
             oidc_configured = self.oidc_discovery.is_configured()
             oauth2_configured = self.oauth2_jwt.is_configured()
-            basic_auth_configured = self.basic_auth.is_configured() or self.basic_auth_with_digest.is_configured()
+            basic_auth_configured = self.basic_auth.is_configured()
 
             if not any([oidc_configured, oauth2_configured, basic_auth_configured]):
                 raise AuthNotConfigured()
@@ -195,11 +203,7 @@ class FastAPISecurity:
                         UserAuth.from_jwt_access_token(access_token)
                     )
             elif http_credentials is not None:
-                is_valid = (
-                    self.basic_auth.validate(http_credentials) or
-                    self.basic_auth_with_digest.validate(http_credentials)
-                )
-                if is_valid:
+                if self.basic_auth.validate(http_credentials):
                     return self._maybe_override_permissions(
                         UserAuth(
                             subject=http_credentials.username,
