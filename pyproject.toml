@@ -32,6 +32,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry.scripts]
+fastapi-security = 'fastapi_security.cli:main'
+
 [tool.poetry.dependencies]
 python = "^3.6"
 aiohttp = "^3"
