@@ -32,12 +32,16 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[tool.poetry.scripts]
+fastapi-security = 'fastapi_security.cli:main'
+
 [tool.poetry.dependencies]
 python = ">=3.6.2,<4.0"
 aiohttp = "^3"
 fastapi = "^0"
 pydantic = "^1"
 PyJWT = {version = "^2", extras = ["crypto"]}
+cryptography = "^3.4.7"
 
 [tool.poetry.dev-dependencies]
 aioresponses = "^0.7.2"

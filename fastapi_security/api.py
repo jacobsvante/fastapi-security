@@ -1,11 +1,15 @@
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Type
+from typing import Callable, Dict, Iterable, List, Optional, Type, Union
 
 from fastapi import Depends, HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 from starlette.datastructures import Headers
 
-from .basic import BasicAuthValidator, IterableOfHTTPBasicCredentials
+from .basic import (
+    BasicAuthValidator,
+    BasicAuthWithDigestValidator,
+    IterableOfHTTPBasicCredentials,
+)
 from .entities import AuthMethod, User, UserAuth, UserInfo
 from .exceptions import AuthNotConfigured
 from .oauth2 import Oauth2JwtAccessTokenValidator
@@ -25,6 +29,7 @@ class FastAPISecurity:
     """
 
     def __init__(self, *, user_permission_class: Type[UserPermission] = UserPermission):
+        self.basic_auth: Union[BasicAuthValidator, BasicAuthWithDigestValidator]
         self.basic_auth = BasicAuthValidator()
         self.oauth2_jwt = Oauth2JwtAccessTokenValidator()
         self.oidc_discovery = OpenIdConnectDiscovery()
@@ -35,7 +40,19 @@ class FastAPISecurity:
         self._oauth2_audiences: List[str] = []
 
     def init_basic_auth(self, basic_auth_credentials: IterableOfHTTPBasicCredentials):
-        self.basic_auth.init(basic_auth_credentials)
+        new_basic_auth = BasicAuthValidator()
+        new_basic_auth.init(basic_auth_credentials)
+        self.basic_auth = new_basic_auth
+
+    def init_basic_auth_with_digest(
+        self,
+        basic_auth_with_digest_credentials: IterableOfHTTPBasicCredentials,
+        *,
+        salt: str,
+    ):
+        new_basic_auth = BasicAuthWithDigestValidator()
+        new_basic_auth.init(basic_auth_with_digest_credentials, salt=salt)
+        self.basic_auth = new_basic_auth
 
     def init_oauth2_through_oidc(
         self, oidc_discovery_url: str, *, audiences: Iterable[str] = None
@@ -185,7 +202,7 @@ class FastAPISecurity:
                     return self._maybe_override_permissions(
                         UserAuth.from_jwt_access_token(access_token)
                     )
-            elif http_credentials is not None and self.basic_auth.is_configured():
+            elif http_credentials is not None:
                 if self.basic_auth.validate(http_credentials):
                     return self._maybe_override_permissions(
                         UserAuth(
