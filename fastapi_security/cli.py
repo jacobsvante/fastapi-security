@@ -24,7 +24,10 @@ main_parser = argparse.ArgumentParser(
 subcommand_parsers = main_parser.add_subparsers(
     help="Specify a sub-command",
     dest="subcommand",
-    required=True,
+    # This would remove the need to manually print an error message if
+    # subcommand is not specified, but it is only available for Python 3.7+
+    #
+    # required=True,
 )
 
 gendigest_description = """
@@ -86,6 +89,14 @@ def main(args: Optional[Sequence[Text]] = None):
         return gendigest(parsed_args)
 
     main_parser.print_usage(file=sys.stderr)
+    if not parsed_args.subcommand:
+        # Error message mimicking that of Python 3.7+ where add_subcommand(...)
+        # function has "required=True" kwarg.
+        required_subcommand_msg = (
+            "fastapi-security: error:"
+            " the following arguments are required: subcommand"
+        )
+        print(required_subcommand_msg, file=sys.stderr)
     sys.exit(2)  # invalid usage: missing subcommand
 
 
