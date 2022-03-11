@@ -18,4 +18,4 @@ repos:
     rev: v0.931
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic]
+        additional_dependencies: [pydantic, types-requests]

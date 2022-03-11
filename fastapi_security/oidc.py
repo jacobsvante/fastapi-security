@@ -2,9 +2,9 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-import aiohttp
-
+from ._optional_dependencies import aiohttp
 from .entities import UserInfo
+from .exceptions import MissingDependency
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,10 @@ class OpenIdConnectDiscovery:
             discovery_cache_period:
                 How many seconds to cache the OpenID Discovery endpoint response. Defaults to 1 hour.
         """
+        if aiohttp is None:
+            raise MissingDependency(
+                "`aiohttp` dependency not installed, ensure its availability with `pip install fastapi-security[oauth2]`"
+            )
         self._discovery_url = discovery_url
         self._discovery_cache_period = float(discovery_cache_period)
 

@@ -9,6 +9,7 @@ from ..helpers.jwks import (
     dummy_jwks_response_data,
     dummy_jwks_uri,
     make_access_token,
+    skipif_oauth2_dependency_not_installed,
 )
 
 
@@ -22,6 +23,7 @@ def test_user_permission_str():
     assert str(perm) == "inventory:list"
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_missing_permission_results_in_403(app, client):
 
     security = FastAPISecurity()
@@ -44,6 +46,7 @@ def test_that_missing_permission_results_in_403(app, client):
         assert resp.json() == {"detail": "Missing required permission users:list"}
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_assigned_permission_result_in_200(app, client):
 
     security = FastAPISecurity()
@@ -67,6 +70,7 @@ def test_that_assigned_permission_result_in_200(app, client):
         assert user1["auth"]["subject"] == "test-user"
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_user_must_have_all_permissions(app, client):
 
     security = FastAPISecurity()

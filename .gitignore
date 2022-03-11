@@ -3,9 +3,10 @@
 *.sublime-*
 /.coverage
 /.pytest_cache
+/.tox
 /build
 /coverage.xml
 /dist
-/poetry.lock
 /htmlcov
+/poetry.lock
 /site

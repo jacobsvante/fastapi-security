@@ -13,9 +13,13 @@ from ..helpers.jwks import (
     dummy_jwks_uri,
     dummy_jwt_headers,
     make_access_token,
+    skipif_oauth2_dependency_not_installed,
 )
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [
+    pytest.mark.asyncio,
+    skipif_oauth2_dependency_not_installed,
+]
 
 
 async def test_that_jwt_cant_be_validated_when_uninitialized(caplog):

@@ -8,7 +8,10 @@ from ..helpers.jwks import (
     dummy_jwks_response_data,
     dummy_jwks_uri,
     make_access_token,
+    skipif_oauth2_dependency_not_installed,
 )
+
+pytestmark = skipif_oauth2_dependency_not_installed
 
 
 def test_that_oauth2_rejects_incorrect_token(app, client):
