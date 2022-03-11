@@ -3,13 +3,11 @@ import logging
 import time
 from typing import Any, Dict, Iterable, List, Optional
 
-import aiohttp
-import jwt
-from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
-from jwt.algorithms import RSAAlgorithm
 from pydantic import ValidationError
 
+from ._optional_dependencies import RSAAlgorithm, _RSAPublicKey, aiohttp, jwt
 from .entities import JwtAccessToken
+from .exceptions import MissingDependency
 
 __all__ = ()
 
@@ -58,7 +56,14 @@ class Oauth2JwtAccessTokenValidator:
             jwks_cache_period:
                 How many seconds to cache the JWKS response. Defaults to 1 hour.
         """
-
+        if aiohttp is None:
+            raise MissingDependency(
+                "`aiohttp` dependency not installed, ensure its availability with `pip install fastapi-security[oauth2]`"
+            )
+        if jwt is None:
+            raise MissingDependency(
+                "`jwt` dependency not installed, ensure its availability with `pip install fastapi-security[oauth2]`"
+            )
         self._jwks_url = jwks_url
         self._jwks_cache_period = float(jwks_cache_period)
         self._audiences = list(audiences)

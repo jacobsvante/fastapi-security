@@ -3,7 +3,12 @@ from fastapi import Depends
 
 from fastapi_security import FastAPISecurity, User
 
-from ..helpers.jwks import dummy_audience, dummy_jwks_response_data, dummy_jwks_uri
+from ..helpers.jwks import (
+    dummy_audience,
+    dummy_jwks_response_data,
+    dummy_jwks_uri,
+    skipif_oauth2_dependency_not_installed,
+)
 
 
 def test_that_header_is_returned_for_basic_auth(app, client):
@@ -18,6 +23,7 @@ def test_that_header_is_returned_for_basic_auth(app, client):
     assert resp.headers["WWW-Authenticate"] == "Basic"
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_header_is_returned_for_oauth2(app, client):
     security = FastAPISecurity()
     security.init_oauth2_through_jwks(dummy_jwks_uri, audiences=[dummy_audience])
@@ -32,6 +38,7 @@ def test_that_header_is_returned_for_oauth2(app, client):
         assert resp.headers["WWW-Authenticate"] == "Bearer"
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_headers_are_returned_for_oauth2_and_basic_auth(app, client):
     security = FastAPISecurity()
     security.init_basic_auth([{"username": "user", "password": "pass"}])

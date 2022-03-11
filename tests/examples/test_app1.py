@@ -1,3 +1,4 @@
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -5,16 +6,13 @@ import requests
 
 from .helpers import run_example_app
 
-try:
-    import uvicorn
-except ImportError:
-    uvicorn = None
-
 app1_path = Path("./examples/app1")
 
 pytestmark = [
     pytest.mark.skipif(not app1_path.exists(), reason="app1 example couldn't be found"),
-    pytest.mark.skipif(uvicorn is None, reason="`uvicorn` isn't installed"),
+    pytest.mark.skipif(
+        importlib.util.find_spec("uvicorn") is None, reason="`uvicorn` isn't installed"
+    ),
     pytest.mark.slow,
 ]
 

@@ -6,10 +6,13 @@ from aioresponses import aioresponses
 
 from fastapi_security.oidc import OpenIdConnectDiscovery
 
-from ..helpers.jwks import make_access_token
+from ..helpers.jwks import make_access_token, skipif_oauth2_dependency_not_installed
 from ..helpers.oidc import dummy_oidc_url, dummy_userinfo_endpoint_url
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [
+    pytest.mark.asyncio,
+    skipif_oauth2_dependency_not_installed,
+]
 
 
 async def test_that_getting_user_info_doesnt_work_uninitialized(caplog):
@@ -30,6 +33,7 @@ async def test_that_getting_user_info_with_empty_access_token_doesnt_work(caplog
     assert "No access token provided" in caplog.text
 
 
+@skipif_oauth2_dependency_not_installed
 async def test_that_dummy_user_info_is_returned_when_endpoint_returns_non_200(caplog):
     caplog.set_level(logging.DEBUG)
     oidc = OpenIdConnectDiscovery()

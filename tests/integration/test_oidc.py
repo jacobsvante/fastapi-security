@@ -8,8 +8,11 @@ from ..helpers.jwks import (
     dummy_jwks_response_data,
     dummy_jwks_uri,
     make_access_token,
+    skipif_oauth2_dependency_not_installed,
 )
 from ..helpers.oidc import dummy_oidc_url, dummy_userinfo_endpoint_url
+
+pytestmark = skipif_oauth2_dependency_not_installed
 
 
 def test_that_auth_can_be_enabled_through_oidc(app, client):

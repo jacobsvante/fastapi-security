@@ -3,7 +3,11 @@ from fastapi import Depends
 from fastapi_security import FastAPISecurity, HTTPBasicCredentials, User
 from fastapi_security.basic import BasicAuthValidator
 
-from ..helpers.jwks import dummy_audience, dummy_jwks_uri
+from ..helpers.jwks import (
+    dummy_audience,
+    dummy_jwks_uri,
+    skipif_oauth2_dependency_not_installed,
+)
 
 
 def test_that_basic_auth_doesnt_validate_any_credentials_if_unconfigured():
@@ -12,6 +16,7 @@ def test_that_basic_auth_doesnt_validate_any_credentials_if_unconfigured():
     assert validator.validate(creds) is False
 
 
+@skipif_oauth2_dependency_not_installed
 def test_that_uninitialized_basic_auth_doesnt_accept_any_credentials(app, client):
     security = FastAPISecurity()
 
