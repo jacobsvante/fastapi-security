@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0](https://github.com/jacobsvante/fastapi-security/compare/v0.4.0...v0.5.0) (2022-03-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Make oauth2 dependencies optional
+
+### Bug Fixes
+
+* Make oauth2 dependencies optional ([e0db0f4](https://github.com/jacobsvante/fastapi-security/commit/e0db0f45761d7295b1e500d5cde67d3c1f263b78))
+
+
+### Documentation
+
+* Document new extra for oauth2 support ([73e1696](https://github.com/jacobsvante/fastapi-security/commit/73e1696915f63ddf6d204adfddbfd49b10d3e4f5))
+* Update changelog to conform to release-please format ([c9bfb16](https://github.com/jacobsvante/fastapi-security/commit/c9bfb16277efeb0ddfb19e3cc1e289608ce0ae94))
+
 ## [0.3.1](https://github.com/jmagnusson/fastapi-security/compare/v0.3.0...v0.3.1) (2021-03-29)
 
 
