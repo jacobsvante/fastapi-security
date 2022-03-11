@@ -1,11 +1,23 @@
 name: cd
 on:
   push:
-    tags:
-      - v*
+    branches: [main]
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: python
+          package-name: fastapi-security
+          bump-minor-pre-major: true
   cd:
     runs-on: ubuntu-latest
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -14,16 +26,7 @@ jobs:
       - uses: abatilo/actions-poetry@v2.1.4
         with:
           poetry-version: '1.1.13'
-      - name: Build
-        run: poetry build
-      - uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-          files: |
-            dist/*.whl
-            dist/*.tar.gz
-      - name: Publish to PyPI
+      - run: poetry build
+      - run: poetry publish
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
-        run: poetry publish
