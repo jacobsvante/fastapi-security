@@ -8,9 +8,8 @@
       
       
       
-      
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.3.6">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.5">
     
     
       
@@ -18,27 +17,27 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.a57b2b03.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.2d9f7617.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.3f5d1f46.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
         
       
     
     
     
       
+        
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
     
-    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
-
 
     
     
@@ -53,7 +52,6 @@
     <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
   
     
-    <script>function __prefix(e){return new URL(".",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
@@ -69,6 +67,7 @@
     <div data-md-component="announce">
       
     </div>
+    
     
       
 
@@ -105,8 +104,7 @@
       <label class="md-header__button md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
       </label>
-      
-<div class="md-search" data-md-component="search" role="dialog">
+      <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
@@ -200,7 +198,6 @@
       
         
 
-
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -213,6 +210,13 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
@@ -256,7 +260,6 @@
                   <div class="md-sidebar__inner">
                     
 
-
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -269,6 +272,13 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
@@ -303,31 +313,35 @@
             <article class="md-content__inner md-typeset">
               
                 
-                
-                <h1 id="fastapi-security">FastAPI-Security</h1>
+
+
+<h1 id="fastapi-security">FastAPI-Security</h1>
 <p>FastAPI-Security is a package that you can use together with <a href="https://fastapi.tiangolo.com/">FastAPI</a> to easily add authentication and authorization.</p>
+<h2 id="installation">Installation</h2>
+<p>With OAuth2/OIDC support:</p>
+<pre><code class="language-bash">pip install fastapi-security[oauth2]
+</code></pre>
+<p>With basic auth only:</p>
+<pre><code class="language-bash">pip install fastapi-security
+</code></pre>
 <h2 id="key-features">Key features</h2>
-<ul>
-<li>Authentication via JWT-based OAuth 2 access tokens and via Basic Auth</li>
-<li>Pydantic-based <code>User</code> model for authenticated and anonymous users</li>
-<li>Sub-classable <code>UserPermission</code> dependency to check against the <code>permissions</code> attribute returned in OAuth 2 access tokens</li>
-<li>Ability to extract user info from access tokens via OpenID Connect</li>
-</ul>
+<p>With base install:
+- Authentication via HTTP Basic Auth
+- Pydantic-based <code>User</code> model for authenticated and anonymous users
+- Limit endpoint access to authenticated users
+- Limit endpoint access to users with an explicit set of user permissions
+- Easily create endpoint for users to check their user info and permissions</p>
+<p>With extra <code>oauth2</code>:
+- Authentication via JWT-based OAuth 2 access tokens in addition to HTTP Basic Auth
+- Ability to extract user info from access tokens via OpenID Connect
+- Permissions are checked agains the <code>permissions</code> attribute returned in OAuth 2 access tokens</p>
 <h2 id="current-limitations">Current limitations</h2>
 <ul>
 <li>Only supports validating access tokens using public keys from a JSON Web Key Set (JWKS) endpoint. I.e. for use with external identity providers such as Auth0 and ORY Hydra.</li>
 <li>Permissions can only be picked up automatically from OAuth2 tokens, from the non-standard <code>permissions</code> list attribute (Auth0 provides this, maybe other identity providers as well). For all other use cases, <code>permission_overrides</code> must be used. For example if there's a basic auth user called <code>user1</code> you can set <code>permission_overrides={"user1": ["*"]}</code> to give the user access to all permissions, or <code>permission_overrides={"user1": ["products:create"]}</code> to only assign <code>user1</code> with the permission <code>products:create</code>.</li>
 </ul>
-<p>Installation</p>
-<pre><code>pip install fastapi-security
-</code></pre>
 <h2 id="usage-example">Usage example</h2>
 <p>An example app using FastAPI-Security <a href="https://github.com/jacobsvante/fastapi-security/tree/main/examples">can be found here</a>.</p>
-                
-              
-              
-                
-
 
               
             </article>
@@ -336,21 +350,19 @@
         
       </main>
       
-        
-<footer class="md-footer">
+        <footer class="md-footer">
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
-        
-        
-          Made with
-          <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-            Material for MkDocs
-          </a>
-        
-        
-      </div>
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
       
     </div>
   </div>
@@ -360,10 +372,10 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.fcfe8b6d.min.js", "version": null}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.bd0b6b67.min.js"}</script>
     
     
-      <script src="assets/javascripts/bundle.b1047164.min.js"></script>
+      <script src="assets/javascripts/bundle.467223ff.min.js"></script>
       
     
   </body>
