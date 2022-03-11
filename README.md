@@ -10,6 +10,14 @@ Add authentication and authorization to your FastAPI app via dependencies.
 
 ## Installation
 
+With OAuth2/OIDC support:
+
+```bash
+pip install fastapi-security[oauth2]
+```
+
+With basic auth only:
+
 ```bash
 pip install fastapi-security
 ```
