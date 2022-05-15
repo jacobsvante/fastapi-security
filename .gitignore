@@ -10,3 +10,4 @@
 /htmlcov
 /poetry.lock
 /site
+.DS_Store
