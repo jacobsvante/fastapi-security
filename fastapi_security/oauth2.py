@@ -44,6 +44,7 @@ class Oauth2JwtAccessTokenValidator:
         audiences: Optional[Union[str, Iterable[str]]],
         *,
         jwks_cache_period: int = DEFAULT_JWKS_RESPONSE_CACHE_PERIOD,
+        decode_options: dict = None
     ):
         """Set up Oauth 2.0 JWT validation
 
@@ -67,6 +68,7 @@ class Oauth2JwtAccessTokenValidator:
         self._jwks_url = jwks_url
         self._jwks_cache_period = float(jwks_cache_period)
         self._audiences = audiences
+        self._decode_options = decode_options
 
     def is_configured(self) -> bool:
         return bool(self._jwks_url)
@@ -161,4 +163,4 @@ class Oauth2JwtAccessTokenValidator:
         self, public_key: _RSAPublicKey, access_token: str
     ) -> Dict[str, Any]:
         # NOTE: jwt.decode has erroneously set key: str
-        return jwt.decode(access_token, key=public_key, audience=self._audiences, algorithms=["RS256"])  # type: ignore
+        return jwt.decode(access_token, key=public_key, audience=self._audiences, algorithms=["RS256"], **self._decode_options)  # type: ignore
