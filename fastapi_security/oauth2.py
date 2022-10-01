@@ -41,7 +41,7 @@ class Oauth2JwtAccessTokenValidator:
     def init(
         self,
         jwks_url: str,
-        audiences: Iterable[str],
+        audiences: Optional[Union[str, Iterable[str]]],
         *,
         jwks_cache_period: int = DEFAULT_JWKS_RESPONSE_CACHE_PERIOD,
     ):
@@ -52,7 +52,7 @@ class Oauth2JwtAccessTokenValidator:
                 The JWKS endpoint to fetch the public keys from. Usually in the
                 format: "https://domain/.well-known/jwks.json"
             audiences:
-                Accepted `aud` values for incoming access tokens
+                Accepted `aud` values for incoming access tokens. Could be a list of string, a string or None.
             jwks_cache_period:
                 How many seconds to cache the JWKS response. Defaults to 1 hour.
         """
@@ -66,7 +66,7 @@ class Oauth2JwtAccessTokenValidator:
             )
         self._jwks_url = jwks_url
         self._jwks_cache_period = float(jwks_cache_period)
-        self._audiences = list(audiences)
+        self._audiences = audiences
 
     def is_configured(self) -> bool:
         return bool(self._jwks_url)
