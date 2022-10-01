@@ -56,6 +56,8 @@ class Oauth2JwtAccessTokenValidator:
                 Accepted `aud` values for incoming access tokens. Could be a list of string, a string or None.
             jwks_cache_period:
                 How many seconds to cache the JWKS response. Defaults to 1 hour.
+            decode_options:
+                Other options for PyJWT's decode function.
         """
         if aiohttp is None:
             raise MissingDependency(
