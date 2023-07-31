@@ -36,7 +36,7 @@ classifiers = [
 python = ">=3.7,<4.0"
 aiohttp = { version = "^3", optional = true }
 fastapi = "^0"
-pydantic = "^1"
+pydantic = "^2"
 PyJWT = { version = "^2", extras = ["crypto"], optional = true }
 
 [tool.poetry.extras]
