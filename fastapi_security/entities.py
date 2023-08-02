@@ -1,16 +1,26 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Annotated
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
+from pydantic.functional_validators import BeforeValidator
+
 
 __all__ = ("User",)
 
+def filtered_str_to_list(v: str) -> List[str]:
+    return [s for s in v.split(' ') if s] if isinstance(v, str) else v
+
+def str_to_list(v: str) -> List[str]:
+    return v.split(' ') if isinstance(v, str) else v
+
+FilteredStringList = Annotated[List[str], BeforeValidator(filtered_str_to_list)]
+StringList = Annotated[List[str], BeforeValidator(str_to_list)]
 
 class JwtAccessToken(BaseModel):
     iss: str = Field(..., description="Issuer")
     sub: str = Field(..., description="Subject")
-    aud: List[str] = Field(..., description="Audience")
+    aud: StringList = Field(..., description="Audience")
     iat: datetime = Field(..., description="Issued At")
     exp: datetime = Field(..., description="Expiration Time")
     azp: str = Field(
@@ -21,27 +31,12 @@ class JwtAccessToken(BaseModel):
         "",
         description="Grant type (auth0 specific, see https://auth0.com/docs/applications/concepts/application-grant-types)",
     )
-    scope: List[str] = Field("", description="Scope Values")
-    permissions: List[str] = Field(
+    scope: FilteredStringList = Field([], description="Scope Values")
+    permissions: StringList = Field(
         [],
         description="Permissions (auth0 specific, intended for first-party app authorization)",
     )
     raw: str = Field(..., description="The raw access token")
-
-    @validator("aud", pre=True, always=True)
-    def aud_to_list(cls, v):
-        return v.split(" ") if isinstance(v, str) else v
-
-    @validator("scope", pre=True, always=True)
-    def scope_to_list(cls, v):
-        if isinstance(v, str):
-            return [s for s in v.split(" ") if s]
-        else:
-            return v
-
-    @validator("permissions", pre=True, always=True)
-    def permissions_to_list(cls, v):
-        return v.split(" ") if isinstance(v, str) else v
 
     def is_client_credentials(self):
         return self.gty == "client-credentials"
